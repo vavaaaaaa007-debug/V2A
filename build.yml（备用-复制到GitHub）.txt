@@ -1,0 +1,45 @@
+name: 打包 视频转音频
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+          - os: macos-latest
+            label: Mac-Apple芯片
+          - os: macos-15-intel
+            label: Mac-Intel芯片
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 打包 Windows
+        if: runner.os == 'Windows'
+        run: pyinstaller --noconfirm --onefile --windowed --name video2audio --icon assets/icon.ico --add-data "assets/icon.png;assets" --collect-all imageio_ffmpeg --collect-all tkinterdnd2 --collect-all customtkinter video2audio.py
+
+      - name: 打包 Mac
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --windowed --name video2audio --osx-bundle-identifier com.local.video2audio --icon assets/icon.icns --add-data "assets/icon.png:assets" --collect-all imageio_ffmpeg --collect-all tkinterdnd2 --collect-all customtkinter video2audio.py
+          cd dist && ditto -c -k --keepParent video2audio.app video2audio-mac.zip
+
+      - name: 上传结果
+        uses: actions/upload-artifact@v4
+        with:
+          name: 视频转音频-${{ matrix.label }}
+          path: |
+            dist/video2audio.exe
+            dist/video2audio-mac.zip
+          if-no-files-found: error
