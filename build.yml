@@ -1,0 +1,51 @@
+name: 打包 视频转音频
+on:
+  push:
+  workflow_dispatch:
+
+# 只给读代码的权限，打包脚本拿不到写仓库的令牌
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+          - os: macos-latest
+            label: Mac-Apple芯片
+          - os: macos-15-intel
+            label: Mac-Intel芯片
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 打包 Windows
+        if: runner.os == 'Windows'
+        run: pyinstaller --noconfirm --onefile --windowed --name video2audio --icon icon.ico --add-data "icon.png;assets" --collect-all imageio_ffmpeg --collect-all tkinterdnd2 --collect-all customtkinter video2audio.py
+
+      - name: 打包 Mac
+        if: runner.os == 'macOS'
+        run: |
+          pyinstaller --noconfirm --windowed --name video2audio --osx-bundle-identifier com.local.video2audio --icon icon.icns --add-data "icon.png:assets" --collect-all imageio_ffmpeg --collect-all tkinterdnd2 --collect-all customtkinter video2audio.py
+          cd dist && ditto -c -k --keepParent video2audio.app video2audio-mac.zip
+
+      - name: 上传结果
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: 视频转音频-${{ matrix.label }}
+          path: |
+            dist/video2audio.exe
+            dist/video2audio-mac.zip
+          if-no-files-found: error

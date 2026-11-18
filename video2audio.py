@@ -99,8 +99,11 @@ def unique_path(path):
 
 def build_cmd(ffmpeg, src, dst, fmt, quality, rate):
     spec = FORMATS[fmt]
-    cmd = [ffmpeg, "-hide_banner", "-nostdin", "-y", "-i", src, "-vn", "-sn", "-dn",
-           "-map", "0:a:0?"]
+    # 绝对路径：防止以 "-" 开头的文件名被当成参数、"http:" 等前缀被当成协议
+    src, dst = os.path.abspath(src), os.path.abspath(dst)
+    # 只允许读本地文件：伪装成视频的播放列表等无法让 ffmpeg 访问网络
+    cmd = [ffmpeg, "-hide_banner", "-nostdin", "-y", "-protocol_whitelist", "file",
+           "-i", src, "-vn", "-sn", "-dn", "-map", "0:a:0?"]
     cmd += [a.replace("{q}", quality) for a in spec["args"]]
     if rate != "原始":
         cmd += ["-ar", rate]
@@ -767,9 +770,15 @@ def cli(argv):
     fmt = "MP3"
     if "--format" in argv:
         i = argv.index("--format")
-        fmt = argv[i + 1].upper()
+        fmt = argv[i + 1].upper() if i + 1 < len(argv) else ""
         del argv[i:i + 2]
+        if fmt not in FORMATS:
+            print("格式只能是：" + " / ".join(FORMATS))
+            return 2
     ffmpeg = find_ffmpeg()
+    if not ffmpeg:
+        print("未找到 ffmpeg")
+        return 2
     files = scan(argv)
     procs, lock, ok = set(), threading.Lock(), 0
     for src in files:
