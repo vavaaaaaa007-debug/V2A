@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-视频转音频 - 一键批量转换工具 (Mac / Windows)
+V2A - 视频一键批量转音频工具 (Mac / Windows)
 自动识别视频文件（mp4 / mov / mkv / avi ...），默认输出 MP3，可选 WAV 等格式。
 界面：CustomTkinter，浅色（薄荷绿，默认）/ 深色（黑色）。
 依赖：ffmpeg（打包时通过 imageio-ffmpeg 内置，用户无需另装）
@@ -18,7 +18,7 @@ from tkinter import ttk, filedialog, messagebox
 
 import customtkinter as ctk
 
-APP_NAME = "视频转音频"
+APP_NAME = "V2A"
 VIDEO_EXTS = {
     ".mp4", ".mov", ".m4v", ".mkv", ".avi", ".wmv", ".flv", ".webm", ".ts",
     ".mts", ".m2ts", ".3gp", ".mpg", ".mpeg", ".vob", ".f4v", ".rm", ".rmvb", ".ogv",
@@ -327,28 +327,18 @@ class App:
         r.grid_columnconfigure(0, weight=1)
         r.grid_rowconfigure(2, weight=1)
 
-        # 顶部
-        head = ctk.CTkFrame(r, fg_color="transparent")
-        head.grid(row=0, column=0, sticky="ew", padx=px, pady=(22, 0))
-        dot = self.w(ctk.CTkLabel, head, text="♪", width=28, height=28, corner_radius=8,
-                     fg_color="@accent", text_color="@on_accent", font=self.f_btn)
-        dot.pack(side="left")
-        self.w(ctk.CTkLabel, head, text=APP_NAME, font=self.f_title,
-               text_color="@text").pack(side="left", padx=(10, 10))
-        self.text(head, "MP4 / MOV 等视频批量转 MP3、WAV", sub=True).pack(side="left", pady=(3, 0))
-        self.theme_btn = self.ghost(head, "☾  深色", self.toggle_theme, width=72)
-        self.theme_btn.pack(side="right")
-
-        # 工具栏
+        # 工具栏（窗口标题栏已显示软件名，不再单独放标题）
         bar = ctk.CTkFrame(r, fg_color="transparent")
-        bar.grid(row=1, column=0, sticky="ew", padx=px, pady=(18, 10))
+        bar.grid(row=1, column=0, sticky="ew", padx=px, pady=(20, 12))
         self.primary(bar, "＋ 添加视频", self.add_files, width=112).pack(side="left")
         self.ghost(bar, "添加文件夹", self.add_folder).pack(side="left", padx=(10, 0))
         self.ghost(bar, "移除选中", self.remove_selected).pack(side="left", padx=(2, 0))
         self.ghost(bar, "清空", self.clear).pack(side="left", padx=(2, 0))
+        self.theme_btn = self.ghost(bar, "☾  深色", self.toggle_theme, width=72)
+        self.theme_btn.pack(side="right")
         self.count_var = tk.StringVar(value="")
         self.w(ctk.CTkLabel, bar, textvariable=self.count_var, font=self.f_sub,
-               text_color="@sub").pack(side="right")
+               text_color="@sub").pack(side="right", padx=(0, 12))
 
         # 列表
         lst = self.w(ctk.CTkFrame, r, fg_color="@card", corner_radius=12,
